@@ -1,23 +1,58 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-var CONFIGFILE = "conf.json"
+var (
+	CONFIGFILE  = "conf.json"
+	SheetsCreds = "sheets_credentials.json"
+	Config      Configuration
+	Manager     ItemsManager
+	unknownText = "Извини, я тебя не понял. Попробуй ещё разок или пожалуйся @evgsol."
+)
+
+func process (id int, input string) (string, error) {
+	s := strings.Split(input, " ")
+	command := s[0]
+	args := s[1:]
+
+	switch command {
+	case "/start":
+		return "Привет! Я дурнирный бот.", nil
+	case "/list":
+		if len(args) != 0 {
+			return unknownText, nil
+		}
+		return Manager.list(id), nil
+	case "/give":
+		if len(args) != 3 || args[1] != "to" {
+			return unknownText, nil
+		}
+		return fmt.Sprintf("(args: %v) Not implemented yet.", args), nil
+	default:
+		return unknownText, nil
+	}
+}
 
 func main() {
-	config := Configuration{}
-	config.init(CONFIGFILE)
+	if err := Config.init(CONFIGFILE); err != nil {
+		log.Fatal(err)
+	}
+	if err := Manager.init(); err != nil {
+		log.Fatal(err)
+	}
 
-	bot, err := tgbotapi.NewBotAPI(config.Token)
+	bot, err := tgbotapi.NewBotAPI(Config.Token)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	bot.Debug = config.Debug
+	bot.Debug = Config.Debug
 
 	log.Printf("Authorized on %s", bot.Self.UserName)
 
@@ -45,12 +80,17 @@ func main() {
 
 	for update := range updates {
 		if update.Message == nil { // ignore any non-Message updates
+			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Only text messages are supported."))
 			continue
 		}
 
-		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+		log.Printf("[%s (%v)] %s", update.Message.From.UserName, update.Message.From.ID, update.Message.Text)
 
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Bot is still under development.")
+		response, err := process(update.Message.From.ID, update.Message.Text)
+		if err != nil {
+			log.Printf("Failed to generate response: %v", err)
+		}
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, response)
 		bot.Send(msg)
 	}
 }

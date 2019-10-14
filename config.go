@@ -6,8 +6,9 @@ import (
 )
 
 type Configuration struct {
-	Token string
-	Debug bool
+	Token       string
+	Debug       bool
+	Spreadsheet string
 }
 
 func (c *Configuration) init(filename string) error {
