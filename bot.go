@@ -2,18 +2,22 @@ package main
 
 import (
 	"log"
-	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
+var CONFIGFILE = "conf.json"
+
 func main() {
-	bot, err := tgbotapi.NewBotAPI(os.Getenv("TOKEN"))
+	config := Configuration{}
+	config.init(CONFIGFILE)
+
+	bot, err := tgbotapi.NewBotAPI(config.Token)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	//bot.Debug = true
+	bot.Debug = config.Debug
 
 	log.Printf("Authorized on %s", bot.Self.UserName)
 
