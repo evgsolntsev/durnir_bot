@@ -16,7 +16,13 @@ var (
 	unknownText = "Извини, я тебя не понял. Попробуй ещё разок или пожалуйся @evgsol."
 )
 
-func process (id int, input string) (string, error) {
+func initManager() {
+	if err := Manager.init(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func process(id int, input string) (string, error) {
 	s := strings.Split(input, " ")
 	command := s[0]
 	args := s[1:]
@@ -25,11 +31,13 @@ func process (id int, input string) (string, error) {
 	case "/start":
 		return "Привет! Я дурнирный бот.", nil
 	case "/list":
+		initManager()
 		if len(args) != 0 {
 			return unknownText, nil
 		}
 		return Manager.list(id), nil
 	case "/give":
+		initManager()
 		if len(args) != 3 || args[1] != "to" {
 			return unknownText, nil
 		}
@@ -41,9 +49,6 @@ func process (id int, input string) (string, error) {
 
 func main() {
 	if err := Config.init(CONFIGFILE); err != nil {
-		log.Fatal(err)
-	}
-	if err := Manager.init(); err != nil {
 		log.Fatal(err)
 	}
 
