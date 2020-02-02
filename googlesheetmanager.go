@@ -16,11 +16,11 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
-type ItemsManager struct {
+type GoogleSheetManager struct {
 	items map[int][]string
 }
 
-func (m *ItemsManager) init() error {
+func (m *GoogleSheetManager) init() error {
 	b, err := ioutil.ReadFile(SheetsCreds)
 	if err != nil {
 		return err
@@ -68,7 +68,7 @@ func (m *ItemsManager) init() error {
 	return nil
 }
 
-func (m *ItemsManager) list(id int) string {
+func (m *GoogleSheetManager) list(id int) string {
 	items, ok := m.items[id]
 	if !ok {
 		return "Я тебя не знаю. Напиши @evgsol, чтобы он нас представил."
@@ -80,7 +80,7 @@ func (m *ItemsManager) list(id int) string {
 	}
 }
 
-func (m *ItemsManager) give(from, to, what string) (string, error) {
+func (m *GoogleSheetManager) give(from, to, what string) (string, error) {
 	return "", nil
 }
 

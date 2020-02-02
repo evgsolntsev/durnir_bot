@@ -12,7 +12,7 @@ var (
 	CONFIGFILE  = "conf.json"
 	SheetsCreds = "sheets_credentials.json"
 	Config      Configuration
-	Manager     ItemsManager
+	Manager     GoogleSheetManager
 	unknownText = "Извини, я тебя не понял. Попробуй ещё разок или пожалуйся @evgsol."
 )
 
