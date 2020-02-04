@@ -1,5 +1,17 @@
 package idtype
 
-type FighterID string
+import (
+	"github.com/globalsign/mgo/bson"
+)
 
-type PlayerID string
+type Fighter bson.ObjectId
+
+func NewFighter() Fighter {
+	return Fighter(bson.NewObjectId())
+}
+
+type Player bson.ObjectId
+
+func NewPlayer() Player {
+	return Player(bson.NewObjectId())
+}

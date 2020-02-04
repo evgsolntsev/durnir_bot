@@ -4,12 +4,18 @@ import (
 	"github.com/evgsolntsev/durnir_bot/idtype"
 )
 
+type Card struct {
+	Type int `bson:"type"`
+}
+
 type Fighter struct {
-	ID        idtype.FighterID `json:"_id" bson:"_id"`
-	Health    int              `json:"health" bson:"health"`
-	Mana      int              `json:"mana" bson:"mana"`
-	Shield    int              `json:"shield" bson:"shield"`
-	Will      int              `json:"will" bson:"will"`
-	Power     int              `json:"power" bson:"power"`
-	FearPower int              `json:"fearPower" bson:"fearPower"`
+	ID        idtype.Fighter `bson:"_id,omitempty"`
+	Health    int            `bson:"health"`
+	Mana      int            `bson:"mana"`
+	Shield    int            `bson:"shield"`
+	Will      int            `bson:"will"`
+	Power     int            `bson:"power"`
+	FearPower int            `bson:"fearPower"`
+	Hex       int            `bson:"hex"`
+	Deck      []Card         `bson:"deck"`
 }
