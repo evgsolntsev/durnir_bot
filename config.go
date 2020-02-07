@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"math/rand"
 	"os"
+	"time"
 )
 
 type Configuration struct {
@@ -12,6 +14,8 @@ type Configuration struct {
 }
 
 func (c *Configuration) init(filename string) error {
+	rand.Seed(time.Now().Unix())
+
 	file, err := os.Open(filename)
 	if err != nil {
 		return err

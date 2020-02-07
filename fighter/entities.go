@@ -1,8 +1,16 @@
 package fighter
 
 import (
+	"context"
+	"math/rand"
+
 	"github.com/evgsolntsev/durnir_bot/idtype"
 )
+
+var cardTypeName = map[int]string{
+	0: "Лечение",
+	1: "Удар",
+}
 
 type Card struct {
 	Type int `bson:"type"`
@@ -10,6 +18,7 @@ type Card struct {
 
 type Fighter struct {
 	ID        idtype.Fighter `bson:"_id,omitempty"`
+	Name      string         `bson:"name"`
 	Health    int            `bson:"health"`
 	Mana      int            `bson:"mana"`
 	Shield    int            `bson:"shield"`
@@ -18,4 +27,9 @@ type Fighter struct {
 	FearPower int            `bson:"fearPower"`
 	Hex       int            `bson:"hex"`
 	Deck      []Card         `bson:"deck"`
+}
+
+func (f *Fighter) GetCard(ctx context.Context) Card {
+	i := rand.Intn(len(f.Deck))
+	return f.Deck[i]
 }

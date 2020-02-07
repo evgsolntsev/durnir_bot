@@ -15,3 +15,9 @@ type Player bson.ObjectId
 func NewPlayer() Player {
 	return Player(bson.NewObjectId())
 }
+
+type Fight bson.ObjectId
+
+func NewFight() Fight {
+	return Fight(bson.NewObjectId())
+}
