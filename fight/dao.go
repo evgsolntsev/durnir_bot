@@ -1,6 +1,5 @@
 package fight
 
-
 import (
 	"context"
 
@@ -27,7 +26,7 @@ type defaultDAO struct {
 	collection *mgo.Collection
 }
 
-func NewDefaultDAO(ctx context.Context, session *mgo.Session) *defaultDAO {
+func NewDAO(ctx context.Context, session *mgo.Session) *defaultDAO {
 	return &defaultDAO{
 		collection: session.DB(DatabaseName).C(CollectionName),
 	}

@@ -25,7 +25,7 @@ type Fighter struct {
 	Will      int            `bson:"will"`
 	Power     int            `bson:"power"`
 	FearPower int            `bson:"fearPower"`
-	Hex       int            `bson:"hex"`
+	Hex       idtype.Hex     `bson:"hex"`
 	Deck      []Card         `bson:"deck"`
 }
 

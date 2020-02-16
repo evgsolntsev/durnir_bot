@@ -24,7 +24,7 @@ func TestFighterDAO(t *testing.T) {
 	require.Nil(t, err)
 
 	ctx := context.Background()
-	dao := NewDefaultDAO(ctx, session)
+	dao := NewDAO(ctx, session)
 	defer dao.RemoveAll(ctx)
 
 	f, err = dao.Insert(ctx, f)

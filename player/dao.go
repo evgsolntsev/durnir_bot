@@ -1,4 +1,4 @@
-package fighter
+package player
 
 import (
 	"context"
@@ -10,13 +10,13 @@ import (
 
 var (
 	DatabaseName   = "dbname"
-	CollectionName = "fighters"
+	CollectionName = "players"
 )
 
 type DAO interface {
-	FindOne(context.Context, idtype.Fighter) (*Fighter, error)
-	Update(context.Context, *Fighter) error
-	Insert(context.Context, *Fighter) (*Fighter, error)
+	FindOne(context.Context, idtype.Player) (*Player, error)
+	Update(context.Context, *Player) error
+	Insert(context.Context, *Player) (*Player, error)
 	RemoveAll(context.Context) error
 }
 
@@ -32,8 +32,8 @@ func NewDAO(ctx context.Context, session *mgo.Session) *defaultDAO {
 	}
 }
 
-func (d *defaultDAO) FindOne(ctx context.Context, id idtype.Fighter) (*Fighter, error) {
-	var result Fighter
+func (d *defaultDAO) FindOne(ctx context.Context, id idtype.Player) (*Player, error) {
+	var result Player
 	err := d.collection.Find(bson.M{"_id": id}).One(&result)
 	if err != nil {
 		return nil, err
@@ -42,17 +42,17 @@ func (d *defaultDAO) FindOne(ctx context.Context, id idtype.Fighter) (*Fighter, 
 	return &result, nil
 }
 
-func (d *defaultDAO) Update(ctx context.Context, fighter *Fighter) error {
-	return d.collection.UpdateId(fighter.ID, fighter)
+func (d *defaultDAO) Update(ctx context.Context, player *Player) error {
+	return d.collection.UpdateId(player.ID, player)
 }
 
-func (d *defaultDAO) Insert(ctx context.Context, fighter *Fighter) (*Fighter, error) {
-	fighter.ID = idtype.NewFighter()
-	err := d.collection.Insert(fighter)
+func (d *defaultDAO) Insert(ctx context.Context, player *Player) (*Player, error) {
+	player.ID = idtype.NewPlayer()
+	err := d.collection.Insert(player)
 	if err != nil {
 		return nil, err
 	}
-	return fighter, nil
+	return player, nil
 }
 
 func (d *defaultDAO) RemoveAll(ctx context.Context) error {
