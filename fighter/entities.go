@@ -25,6 +25,8 @@ type Fighter struct {
 	Will      int            `bson:"will"`
 	Power     int            `bson:"power"`
 	FearPower int            `bson:"fearPower"`
+
+	JoinFight bool           `bson:"joinFight"`
 	Hex       idtype.Hex     `bson:"hex"`
 	Deck      []Card         `bson:"deck"`
 }

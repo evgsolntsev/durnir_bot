@@ -3,6 +3,7 @@ package fight
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/evgsolntsev/durnir_bot/fighter"
@@ -21,6 +22,7 @@ var (
 
 type Manager interface {
 	Step(context.Context, *Fight) error
+	JoinFighters(context.Context, *Fight) error
 }
 
 type defaultManager struct {
@@ -31,6 +33,11 @@ type defaultManager struct {
 }
 
 func (m *defaultManager) Step(ctx context.Context, fight *Fight) error {
+	err := m.JoinFighters(ctx, fight)
+	if err != nil {
+		return err
+	}
+
 	if !fight.Started {
 		return m.StartFightIfNeeded(ctx, fight)
 	}
@@ -86,6 +93,43 @@ func (m *defaultManager) NotificateFighters(ctx context.Context, fight *Fight, m
 	return nil
 }
 
+func (m *defaultManager) JoinFighters(ctx context.Context, fight *Fight) error {
+	fighters, err := m.FighterManager.FindJoining(ctx, fight.Hex)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range fighters {
+		state := NewFighterState(f)
+		i := rand.Intn(len(fight.Fighters) + 1)
+		if i == 0 {
+			fight.Fighters = append([]FighterState{state}, fight.Fighters...)
+		} else if i == len(fight.Fighters) {
+			fight.Fighters = append(fight.Fighters, state)
+		} else {
+			left := make([]FighterState, i)
+			copy(left, fight.Fighters[0:i])
+			right := make([]FighterState, len(fight.Fighters)-i)
+			copy(right, fight.Fighters[i:])
+			fight.Fighters = append(left, state)
+			fight.Fighters = append(fight.Fighters, right...)
+		}
+	}
+	return m.FightDAO.Update(ctx, fight)
+}
+
 func checkPeriod(a, b time.Time, d time.Duration) bool {
 	return b.After(a.Add(d))
+}
+
+func NewManager(
+	ctx context.Context, playerManager player.Manager,
+	fighterManager fighter.Manager, dao DAO, notificator Notificator,
+) Manager {
+	return &defaultManager{
+		PlayerManager:  playerManager,
+		FighterManager: fighterManager,
+		FightDAO:       dao,
+		Notificator:    notificator,
+	}
 }

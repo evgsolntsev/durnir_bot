@@ -26,6 +26,6 @@ func NewFight() Fight {
 
 type Hex int
 
-func NewHex() int {
-	return rand.Intn(1000)
+func NewHex() Hex {
+	return Hex(rand.Intn(1000))
 }

@@ -23,5 +23,5 @@ func NewManager(ctx context.Context, dao DAO) *defaultManager {
 }
 
 func (m *defaultManager) FindPlayersByFighters(ctx context.Context, fighterIDs []idtype.Fighter) ([]Player, error) {
-	return nil, nil
+	return m.PlayerDAO.FindByFighters(ctx, fighterIDs)
 }

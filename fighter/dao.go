@@ -15,6 +15,7 @@ var (
 
 type DAO interface {
 	FindOne(context.Context, idtype.Fighter) (*Fighter, error)
+	FindJoining(context.Context, idtype.Hex) ([]*Fighter, error)
 	Update(context.Context, *Fighter) error
 	Insert(context.Context, *Fighter) (*Fighter, error)
 	RemoveAll(context.Context) error
@@ -40,6 +41,20 @@ func (d *defaultDAO) FindOne(ctx context.Context, id idtype.Fighter) (*Fighter, 
 	}
 
 	return &result, nil
+}
+
+func (d *defaultDAO) FindJoining(ctx context.Context, hexID idtype.Hex) ([]*Fighter, error) {
+	query := bson.M{
+		"joinFight": true,
+		"hex": hexID,
+	}
+	var result []*Fighter
+	err := d.collection.Find(query).All(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (d *defaultDAO) Update(ctx context.Context, fighter *Fighter) error {

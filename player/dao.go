@@ -15,6 +15,7 @@ var (
 
 type DAO interface {
 	FindOne(context.Context, idtype.Player) (*Player, error)
+	FindByFighters(context.Context, []idtype.Fighter) ([]Player, error)
 	Update(context.Context, *Player) error
 	Insert(context.Context, *Player) (*Player, error)
 	RemoveAll(context.Context) error
@@ -58,4 +59,19 @@ func (d *defaultDAO) Insert(ctx context.Context, player *Player) (*Player, error
 func (d *defaultDAO) RemoveAll(ctx context.Context) error {
 	_, err := d.collection.RemoveAll(bson.M{})
 	return err
+}
+
+func (d *defaultDAO) FindByFighters(ctx context.Context, fIDs []idtype.Fighter) ([]Player, error) {
+	var result []Player
+	query := bson.M{
+		"fighterId": bson.M{
+			"$in": fIDs,
+		},
+	}
+
+	if err := d.collection.Find(query).All(&result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
