@@ -46,7 +46,7 @@ func (d *defaultDAO) FindOne(ctx context.Context, id idtype.Fighter) (*Fighter, 
 func (d *defaultDAO) FindJoining(ctx context.Context, hexID idtype.Hex) ([]*Fighter, error) {
 	query := bson.M{
 		"joinFight": true,
-		"hex": hexID,
+		"hex":       hexID,
 	}
 	var result []*Fighter
 	err := d.collection.Find(query).All(&result)

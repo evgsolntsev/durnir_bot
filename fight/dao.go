@@ -15,6 +15,7 @@ var (
 
 type DAO interface {
 	FindOne(context.Context, idtype.Fight) (*Fight, error)
+	FindOneByHex(context.Context, idtype.Hex) (*Fight, error)
 	Update(context.Context, *Fight) error
 	Insert(context.Context, *Fight) (*Fight, error)
 	RemoveAll(context.Context) error
@@ -35,6 +36,16 @@ func NewDAO(ctx context.Context, session *mgo.Session) *defaultDAO {
 func (d *defaultDAO) FindOne(ctx context.Context, id idtype.Fight) (*Fight, error) {
 	var result Fight
 	err := d.collection.Find(bson.M{"_id": id}).One(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+func (d *defaultDAO) FindOneByHex(ctx context.Context, id idtype.Hex) (*Fight, error) {
+	var result Fight
+	err := d.collection.Find(bson.M{"hex": id}).One(&result)
 	if err != nil {
 		return nil, err
 	}

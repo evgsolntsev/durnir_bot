@@ -17,7 +17,7 @@ func TestFighterMarshalling(t *testing.T) {
 		Power:     4,
 		FearPower: 3,
 		Hex:       5,
-		Deck:      []Card{{Type: 1}, {Type: 2}},
+		Deck:      []Card{CardHeal, CardHeal},
 	}
 	data, err := bson.Marshal(f)
 	require.Nil(t, err)
@@ -29,20 +29,17 @@ func TestFighterMarshalling(t *testing.T) {
 }
 
 func TestFighterGetCard(t *testing.T) {
-	var cards []Card
-	for i := 0; i < 3; i++ {
-		cards = append(cards, Card{Type: i})
-	}
+	cards := []Card{CardHeal, CardHit, CardScream}
 
 	f := &Fighter{
 		Deck: cards,
 	}
 
 	ctx := context.Background()
-	result := make(map[int]bool)
+	result := make(map[Card]bool)
 	for i := 0; i < 100; i++ {
 		card := f.GetCard(ctx)
-		result[card.Type] = true
+		result[card] = true
 	}
 
 	require.Len(t, result, 3)

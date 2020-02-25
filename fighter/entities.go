@@ -12,23 +12,49 @@ var cardTypeName = map[int]string{
 	1: "Удар",
 }
 
-type Card struct {
-	Type int `bson:"type"`
+type Card int
+
+var (
+	CardHeal = Card(0)
+	CardHit  = Card(1)
+	CardSkip = Card(2)
+)
+
+func (c Card) Name() string {
+	switch c{
+	case CardHeal:
+		return "Лечение"
+	case CardHit:
+		return "Удар"
+	case CardSkip:
+		return "Пропуск"
+	default:
+		return "!@#$"
+	}
 }
 
-type Fighter struct {
-	ID        idtype.Fighter `bson:"_id,omitempty"`
-	Name      string         `bson:"name"`
-	Health    int            `bson:"health"`
-	Mana      int            `bson:"mana"`
-	Shield    int            `bson:"shield"`
-	Will      int            `bson:"will"`
-	Power     int            `bson:"power"`
-	FearPower int            `bson:"fearPower"`
+type Fraction int
 
-	JoinFight bool           `bson:"joinFight"`
-	Hex       idtype.Hex     `bson:"hex"`
-	Deck      []Card         `bson:"deck"`
+var (
+	FractionPlayers  = Fraction(0)
+	FractionMonsters = Fraction(1)
+)
+
+type Fighter struct {
+	ID   idtype.Fighter `bson:"_id,omitempty"`
+	Name string         `bson:"name"`
+
+	Health    int `bson:"health"`
+	Mana      int `bson:"mana"`
+	Shield    int `bson:"shield"`
+	Will      int `bson:"will"`
+	Power     int `bson:"power"`
+	FearPower int `bson:"fearPower"`
+
+	JoinFight bool       `bson:"joinFight"`
+	Hex       idtype.Hex `bson:"hex"`
+	Deck      []Card     `bson:"deck"`
+	Fraction  Fraction
 }
 
 func (f *Fighter) GetCard(ctx context.Context) Card {

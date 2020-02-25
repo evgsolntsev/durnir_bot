@@ -9,7 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFighterDAO(t *testing.T) {
+func TestFightDAO(t *testing.T) {
+	h1 := idtype.NewHex()
+	h2 := idtype.NewHex()
 	fs1 := FighterState{
 		ID: idtype.NewFighter(),
 	}
@@ -20,8 +22,9 @@ func TestFighterDAO(t *testing.T) {
 		ID: idtype.NewFighter(),
 	}
 	f := &Fight{
-		Fighters:  []FighterState{fs1, fs2},
-		Started:    false,
+		Fighters: []FighterState{fs1, fs2},
+		Started:  false,
+		Hex:      h2,
 	}
 
 	session, err := mgo.Dial("mongodb://localhost:27017")
@@ -35,6 +38,7 @@ func TestFighterDAO(t *testing.T) {
 	require.Nil(t, err)
 
 	f.Fighters = append(f.Fighters, fs3)
+	f.Hex = h1
 	f, err = dao.Insert(ctx, f)
 	require.Nil(t, err)
 
@@ -49,4 +53,12 @@ func TestFighterDAO(t *testing.T) {
 	dbF, err = dao.FindOne(ctx, f.ID)
 	require.Nil(t, err)
 	require.Equal(t, *f, *dbF)
+
+	dbF, err = dao.FindOneByHex(ctx, h1)
+	require.Nil(t, err)
+	require.Equal(t, *f, *dbF)
+
+	dbF, err = dao.FindOneByHex(ctx, idtype.NewHex())
+	require.Nil(t, dbF)
+	require.Error(t, err)
 }

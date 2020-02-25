@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/evgsolntsev/durnir_bot/fighter"
 	"github.com/evgsolntsev/durnir_bot/idtype"
 	"github.com/evgsolntsev/durnir_bot/player"
+	"github.com/globalsign/mgo"
 )
 
 type Notificator interface {
@@ -21,7 +23,7 @@ var (
 )
 
 type Manager interface {
-	Step(context.Context, *Fight) error
+	Step(context.Context, idtype.Hex) error
 	JoinFighters(context.Context, *Fight) error
 }
 
@@ -32,8 +34,39 @@ type defaultManager struct {
 	Notificator    Notificator
 }
 
-func (m *defaultManager) Step(ctx context.Context, fight *Fight) error {
-	err := m.JoinFighters(ctx, fight)
+func (m *defaultManager) Step(ctx context.Context, hexID idtype.Hex) error {
+	fight, err := m.FightDAO.FindOneByHex(ctx, hexID)
+	if err != nil {
+		if err != mgo.ErrNotFound {
+			return err
+		} else {
+			fighters, err := m.FighterManager.FindJoining(ctx, hexID)
+			if err != nil {
+				return err
+			}
+			if len(fighters) > 0 {
+				fight, err = m.InitFight(ctx, hexID, fighters)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	now := time.Now()
+	if !checkPeriod(fight.UpdatedTime, now, TimeToUpdate) {
+		return nil
+	}
+
+	stopped, err := m.StopFightIfNeededAndLoot(ctx, fight)
+	if err != nil {
+		return err
+	}
+	if stopped {
+		return nil
+	}
+
+	err = m.JoinFighters(ctx, fight)
 	if err != nil {
 		return err
 	}
@@ -42,13 +75,99 @@ func (m *defaultManager) Step(ctx context.Context, fight *Fight) error {
 		return m.StartFightIfNeeded(ctx, fight)
 	}
 
-	now := time.Now()
-	if !checkPeriod(fight.UpdatedTime, now, TimeToUpdate) {
-		return nil
+	var turns []string
+	for i, fs := range fight.Fighters {
+		if fight.Fighters[i].Health == 0 {
+			continue
+		}
+
+		f, err := m.FighterManager.GetOne(ctx, fs.ID)
+		if err != nil {
+			return err
+		}
+
+		var message string
+		card := f.GetCard(ctx)
+		switch card {
+		case fighter.CardHeal:
+			target, err := m.GetRandomFromSameFraction(ctx, fight, fs)
+			if err != nil {
+				message = fmt.Sprintf(
+					"%s использует карту \"%s\" и получает ошибку: %s.",
+					f.Name, card.Name(), err.Error())
+			} else {
+				targetFighter, err := m.FighterManager.GetOne(ctx, target.ID)
+				if err != nil {
+					return err
+				}
+				healedFull := target.Health + 10
+				if healedFull < target.MaxHealth {
+					target.Health = healedFull
+				} else {
+					target.Health = target.MaxHealth
+				}
+				message = fmt.Sprintf(
+					"%s использует карту \"%s\". %s восстанавливает здоровье до %d.",
+					f.Name, card.Name(), targetFighter.Name, target.Health)
+			}
+		case fighter.CardHit:
+			target, err := m.GetRandomFromAnotherFraction(ctx, fight, fs)
+			if err != nil {
+				message = fmt.Sprintf(
+					"%s использует карту \"%s\" и получает ошибку: %s.",
+					f.Name, card.Name(), err.Error())
+			} else {
+				targetFighter, err := m.FighterManager.GetOne(ctx, target.ID)
+				if err != nil {
+					return err
+				}
+				heatedFull := target.Health - 9
+				if heatedFull < 0 {
+					target.Health = 0
+				} else {
+					target.Health = heatedFull
+				}
+				message = fmt.Sprintf(
+					"%s использует карту \"%s\". Здоровье %s теперь %d.",
+					f.Name, card.Name(), targetFighter.Name, target.Health)
+			}
+		case fighter.CardSkip:
+			message = fmt.Sprintf(
+				"%s использует карту \"%s\" и пропускает ход.", f.Name, card.Name())
+		default:
+			return fmt.Errorf("Unknown card type!")
+		}
+
+		turns = append(turns, message)
 	}
 
-	// TODO: actual step
-	return nil
+	fight.UpdatedTime = time.Now()
+	err = m.FightDAO.Update(ctx, fight)
+	if err != nil {
+		return err
+	}
+
+	return m.NotificateFighters(ctx, fight, strings.Join(turns, "\n"))
+}
+
+func (m *defaultManager) GetRandomFromSameFraction(ctx context.Context, fight *Fight, state FighterState) (*FighterState, error) {
+	var states []*FighterState
+	for i, _ := range fight.Fighters {
+		if fight.Fighters[i].Fraction == state.Fraction {
+			states = append(states, &fight.Fighters[i])
+		}
+	}
+	return getRandom(ctx, states)
+}
+
+func (m *defaultManager) GetRandomFromAnotherFraction(ctx context.Context, fight *Fight, state FighterState) (*FighterState, error) {
+	var states []*FighterState
+	for i, _ := range fight.Fighters {
+		if fight.Fighters[i].Fraction != state.Fraction {
+			states = append(states, &fight.Fighters[i])
+		}
+	}
+	return getRandom(ctx, states)
 }
 
 func (m *defaultManager) StartFightIfNeeded(ctx context.Context, fight *Fight) error {
@@ -66,6 +185,10 @@ func (m *defaultManager) StartFightIfNeeded(ctx context.Context, fight *Fight) e
 
 	message := fmt.Sprintf("Битва на гексе %v началась!", fight.Hex)
 	return m.NotificateFighters(ctx, fight, message)
+}
+
+func (m *defaultManager) StopFightIfNeededAndLoot(ctx context.Context, fight *Fight) (bool, error) {
+	return false, nil
 }
 
 func (m *defaultManager) NotificateFighters(ctx context.Context, fight *Fight, message string) error {
@@ -115,7 +238,33 @@ func (m *defaultManager) JoinFighters(ctx context.Context, fight *Fight) error {
 			fight.Fighters = append(fight.Fighters, right...)
 		}
 	}
-	return m.FightDAO.Update(ctx, fight)
+	if err := m.FightDAO.Update(ctx, fight); err != nil {
+		return err
+	}
+
+	for _, f := range fighters {
+		if err := m.FighterManager.SetJoining(ctx, f.ID, false); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *defaultManager) InitFight(ctx context.Context, hexID idtype.Hex, fighters []*fighter.Fighter) (*Fight, error) {
+	var fighterStates []FighterState
+	for _, f := range fighters {
+		fighterStates = append(fighterStates, NewFighterState(f))
+	}
+
+	now := time.Now()
+	fight := &Fight{
+		Fighters:    fighterStates,
+		UpdatedTime: now,
+		Started:     false,
+		Hex:         hexID,
+	}
+	return m.FightDAO.Insert(ctx, fight)
 }
 
 func checkPeriod(a, b time.Time, d time.Duration) bool {
@@ -132,4 +281,11 @@ func NewManager(
 		FightDAO:       dao,
 		Notificator:    notificator,
 	}
+}
+
+func getRandom(ctx context.Context, states []*FighterState) (*FighterState, error) {
+	if len(states) == 0 {
+		return nil, fmt.Errorf("цель не найдена")
+	}
+	return states[rand.Intn(len(states))], nil
 }
