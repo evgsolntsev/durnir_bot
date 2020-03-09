@@ -19,6 +19,7 @@ func TestFighterDAO(t *testing.T) {
 		FearPower: 3,
 		Hex:       5,
 		Deck:      []Card{},
+		Parts:     []Part{},
 	}
 
 	session, err := mgo.Dial("mongodb://localhost:27017")
@@ -28,10 +29,12 @@ func TestFighterDAO(t *testing.T) {
 	dao := NewDAO(ctx, session)
 	defer dao.RemoveAll(ctx)
 
+	f.ID = idtype.NewFighter()
 	f, err = dao.Insert(ctx, f)
 	require.Nil(t, err)
 
 	f.Mana = 300
+	f.ID = idtype.NewFighter()
 	f, err = dao.Insert(ctx, f)
 	require.Nil(t, err)
 

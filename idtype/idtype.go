@@ -29,3 +29,8 @@ type Hex int
 func NewHex() Hex {
 	return Hex(rand.Intn(1000))
 }
+
+var (
+	ZeroPlayer  = Player(bson.ObjectId(""))
+	ZeroFighter = Fighter(bson.ObjectId(""))
+)

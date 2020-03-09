@@ -188,7 +188,171 @@ func (m *defaultManager) StartFightIfNeeded(ctx context.Context, fight *Fight) e
 }
 
 func (m *defaultManager) StopFightIfNeededAndLoot(ctx context.Context, fight *Fight) (bool, error) {
-	return false, nil
+	mapFighters := make(map[fighter.Fraction][]FighterState)
+	for _, fs := range fight.Fighters {
+		mapFighters[fs.Fraction] = append(mapFighters[fs.Fraction], fs)
+	}
+
+	activeFractions := 0
+	for _, states := range mapFighters {
+		isActive := false
+		for _, state := range states {
+			if state.Health != 0 {
+				isActive = true
+			}
+		}
+		if isActive {
+			activeFractions += 1
+		}
+	}
+
+	if activeFractions > 1 {
+		return false, nil
+	}
+
+	var fighterIDs []idtype.Fighter
+	for _, fighterState := range fight.Fighters {
+		fighterIDs = append(fighterIDs, fighterState.ID)
+	}
+
+	playersMap, err := m.PlayerManager.FindPlayersByFightersMap(ctx, fighterIDs)
+	if err != nil {
+		return false, err
+	}
+	fightersMap, err := m.FighterManager.GetMapByIDs(ctx, fighterIDs)
+	if err != nil {
+		return false, err
+	}
+
+	var (
+		gold          int = 0
+		aliveFighters int = 0
+		parts         []fighter.Part
+	)
+	for _, state := range fight.Fighters {
+		if state.Health != 0 {
+			continue
+		}
+		aliveFighters++
+		fighter, ok := fightersMap[state.ID]
+		if !ok {
+			return false, fmt.Errorf("fighter '%s' not found", state.ID)
+		}
+		player, isPlayer := playersMap[state.ID]
+		if isPlayer {
+			partsVal := 0
+			for _, part := range fighter.Parts {
+				partsVal += part.Value()
+			}
+			player.Gold += partsVal / 2
+			if err := m.PlayerManager.Update(ctx, &player); err != nil {
+				return false, err
+			}
+		} else {
+			gold += fighter.Gold
+			parts = append(parts, fighter.Parts...)
+		}
+
+		if err := m.RemoveFighter(ctx, fight, state.ID); err != nil {
+			return false, err
+		}
+	}
+
+	var messages []string
+	alivePlayers := 0
+	added := 0
+	for _, state := range fight.Fighters {
+		if state.Health == 0 {
+			continue
+		}
+		amountToAdd := gold / aliveFighters
+		if added < (gold % aliveFighters) {
+			amountToAdd += 1
+		}
+		fighter := fightersMap[state.ID]
+		player, isPlayer := playersMap[state.ID]
+		var err error
+		if isPlayer {
+			alivePlayers += 1
+			err = m.AddGold(ctx, amountToAdd, fighter.ID, player.ID)
+			messages = append(messages,
+				fmt.Sprintf("%v получает %d золота.", player.Name, amountToAdd))
+		} else {
+			err = m.AddGold(ctx, amountToAdd, fighter.ID, idtype.ZeroPlayer)
+			messages = append(messages,
+				fmt.Sprintf("%v получает %d золота.", fighter.Name, amountToAdd))
+		}
+		if err != nil {
+			return false, err
+		}
+		added++
+	}
+
+	if alivePlayers == 0 {
+		return true, nil
+	}
+
+	i := 0
+	j := 0
+	for {
+		if j >= len(parts) {
+			break
+		}
+		state := fight.Fighters[i%len(fight.Fighters)]
+		player, isPlayer := playersMap[state.ID]
+		if !isPlayer || state.Health == 0 {
+			i++
+			continue
+		}
+		if err := m.AddPart(ctx, parts[j], player.ID); err != nil {
+			return false, err
+		}
+		messages = append(messages,
+			fmt.Sprintf("%v получает %v.", player.Name, parts[j].Name()))
+		i++
+		j++
+	}
+
+	if err := m.NotificateFighters(ctx, fight, strings.Join(messages, "\n")); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (m *defaultManager) RemoveFighter(ctx context.Context, fight *Fight, fighterID idtype.Fighter) error {
+	return m.FighterManager.RemoveOne(ctx, fighterID)
+}
+
+func (m *defaultManager) AddGold(ctx context.Context, gold int, fighterID idtype.Fighter, playerID idtype.Player) error {
+	if playerID == idtype.ZeroPlayer {
+		fighter, err := m.FighterManager.GetOne(ctx, fighterID)
+		if err != nil {
+			return err
+		}
+		fighter.Gold += gold
+		if err := m.FighterManager.Update(ctx, fighter); err != nil {
+			return err
+		}
+	} else {
+		player, err := m.PlayerManager.GetOne(ctx, playerID)
+		if err != nil {
+			return err
+		}
+		player.Gold += gold
+		if err := m.PlayerManager.Update(ctx, player); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *defaultManager) AddPart(ctx context.Context, part fighter.Part, playerID idtype.Player) error {
+	player, err := m.PlayerManager.GetOne(ctx, playerID)
+	if err != nil {
+		return err
+	}
+	player.Parts = append(player.Parts, part)
+	return m.PlayerManager.Update(ctx, player)
 }
 
 func (m *defaultManager) NotificateFighters(ctx context.Context, fight *Fight, message string) error {

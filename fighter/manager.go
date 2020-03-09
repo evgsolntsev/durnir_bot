@@ -10,6 +10,9 @@ type Manager interface {
 	SetJoining(context.Context, idtype.Fighter, bool) error
 	FindJoining(context.Context, idtype.Hex) ([]*Fighter, error)
 	GetOne(context.Context, idtype.Fighter) (*Fighter, error)
+	GetMapByIDs(context.Context, []idtype.Fighter) (map[idtype.Fighter]Fighter, error)
+	Update(context.Context, *Fighter) error
+	RemoveOne(context.Context, idtype.Fighter) error
 }
 
 type defaultManager struct {
@@ -40,4 +43,25 @@ func (d *defaultManager) SetJoining(ctx context.Context, fID idtype.Fighter, joi
 
 func (d *defaultManager) GetOne(ctx context.Context, fID idtype.Fighter) (*Fighter, error) {
 	return d.FighterDAO.FindOne(ctx, fID)
+}
+
+func (d *defaultManager) GetMapByIDs(ctx context.Context, fIDs []idtype.Fighter) (map[idtype.Fighter]Fighter, error) {
+	fighters, err := d.FighterDAO.FindByIDs(ctx, fIDs)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[idtype.Fighter]Fighter)
+	for _, f := range fighters {
+		result[f.ID] = *f
+	}
+	return result, nil
+
+}
+
+func (d *defaultManager) RemoveOne(ctx context.Context, fID idtype.Fighter) error {
+	return d.FighterDAO.RemoveOne(ctx, fID)
+}
+
+func (m *defaultManager) Update(ctx context.Context, f *Fighter) error {
+	return m.FighterDAO.Update(ctx, f)
 }

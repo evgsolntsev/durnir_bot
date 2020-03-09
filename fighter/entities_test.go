@@ -18,6 +18,7 @@ func TestFighterMarshalling(t *testing.T) {
 		FearPower: 3,
 		Hex:       5,
 		Deck:      []Card{CardHeal, CardHeal},
+		Parts:     []Part{},
 	}
 	data, err := bson.Marshal(f)
 	require.Nil(t, err)
@@ -29,7 +30,7 @@ func TestFighterMarshalling(t *testing.T) {
 }
 
 func TestFighterGetCard(t *testing.T) {
-	cards := []Card{CardHeal, CardHit, CardScream}
+	cards := []Card{CardHeal, CardHit, CardSkip}
 
 	f := &Fighter{
 		Deck: cards,
