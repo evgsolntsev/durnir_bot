@@ -417,6 +417,127 @@ func TestLoot(t *testing.T) {
 
 		require.Equal(t, expectedMessagesMap, realMessagesMap)
 	})
+	t.Run("Monsters win", func(t *testing.T) {
+		defer func() {
+			playerDAO.RemoveAll(ctx)
+			fighterDAO.RemoveAll(ctx)
+			fightDAO.RemoveAll(ctx)
+			notificator.Reset(ctx)
+		}()
+
+		f1 := idtype.NewFighter()
+		f2 := idtype.NewFighter()
+		f3 := idtype.NewFighter()
+		f4 := idtype.NewFighter()
+		hex := idtype.NewHex()
+		fighters := []fighter.Fighter{{
+			ID:       f1,
+			Name:     "Лебедь-отступник 1",
+			Health:   100,
+			Gold:     100,
+			Parts:    []fighter.Part{fighter.PartBeak, fighter.PartBeak},
+			Fraction: fighter.FractionMonsters,
+		}, {
+			ID:       f2,
+			Name:     "Лебедь-отступник 2",
+			Health:   100,
+			Gold:     200,
+			Parts:    []fighter.Part{fighter.PartBrain},
+			Fraction: fighter.FractionMonsters,
+		}, {
+			ID:       f3,
+			Name:     "Монстр Ундо",
+			Health:   100,
+			Parts:    []fighter.Part{fighter.PartBeak},
+			Fraction: fighter.FractionPlayers,
+		}, {
+			ID:       f4,
+			Name:     "Монстр Сарасти",
+			Health:   100,
+			Parts:    []fighter.Part{fighter.PartBrain},
+			Fraction: fighter.FractionPlayers,
+		}}
+		players := []player.Player{{
+			Name:      "Ундо",
+			FighterID: &f3,
+			Gold:      5000,
+			Parts:     []fighter.Part{fighter.PartHand},
+		}, {
+			Name:      "Сарасти",
+			FighterID: &f4,
+			Gold:      100,
+			Parts:     []fighter.Part{fighter.PartWing},
+		}}
+		fight := Fight{
+			Fighters: []FighterState{
+				NewFighterState(&fighters[0]),
+				NewFighterState(&fighters[1]),
+				NewFighterState(&fighters[2]),
+				NewFighterState(&fighters[3]),
+			},
+			Hex:         hex,
+			Started:     true,
+			UpdatedTime: time.Now(),
+		}
+		fight.Fighters[2].Health = 0
+		fight.Fighters[3].Health = 0
+
+		for _, f := range fighters {
+			_, err := fighterDAO.Insert(ctx, &f)
+			require.NoError(t, err)
+		}
+		for i, p := range players {
+			p, err := playerDAO.Insert(ctx, &p)
+			require.NoError(t, err)
+			players[i].ID = p.ID
+		}
+		_, err := fightDAO.Insert(ctx, &fight)
+		require.NoError(t, err)
+
+		err = manager.Step(ctx, hex)
+		require.NoError(t, err)
+
+		newUndo, err := playerDAO.FindOne(ctx, players[0].ID)
+		require.NoError(t, err)
+		require.Equal(t, 5050, newUndo.Gold)
+		require.Equal(t, []fighter.Part{fighter.PartHand}, newUndo.Parts)
+
+		newSaratie, err := playerDAO.FindOne(ctx, players[1].ID)
+		require.NoError(t, err)
+		require.Equal(t, 2600, newSaratie.Gold)
+		require.Equal(t, []fighter.Part{fighter.PartWing}, newSaratie.Parts)
+
+		fighter, err := fighterDAO.FindOne(ctx, f3)
+		require.Error(t, err)
+		require.Nil(t, fighter)
+		require.Contains(t, err.Error(), "not found")
+
+		fighter, err = fighterDAO.FindOne(ctx, f4)
+		require.Error(t, err)
+		require.Nil(t, fighter)
+		require.Contains(t, err.Error(), "not found")
+
+		fighter, err = fighterDAO.FindOne(ctx, f1)
+		require.NoError(t, err)
+		require.NotNil(t, fighter)
+
+		fighter, err = fighterDAO.FindOne(ctx, f2)
+		require.NoError(t, err)
+		require.NotNil(t, fighter)
+
+		expectedMessage := "Ундо получает 50 золота за проданные части убитого монстра.\nСарасти получает 2500 золота за проданные части убитого монстра."
+		expectedMessagesMap := make(map[idtype.Player]string)
+		for _, pID := range []idtype.Player{newUndo.ID, newSaratie.ID} {
+			expectedMessagesMap[pID] = expectedMessage
+		}
+
+		realMessagesMap := make(map[idtype.Player]string)
+		for _, m := range notificator.Messages {
+			realMessagesMap[m.PlayerID] = m.Text
+		}
+
+		require.Equal(t, expectedMessagesMap, realMessagesMap)
+	})
 }
 
 type Message struct {

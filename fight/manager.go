@@ -228,12 +228,13 @@ func (m *defaultManager) StopFightIfNeededAndLoot(ctx context.Context, fight *Fi
 		gold          int = 0
 		aliveFighters int = 0
 		parts         []fighter.Part
+		messages      []string
 	)
 	for _, state := range fight.Fighters {
 		if state.Health != 0 {
+			aliveFighters++
 			continue
 		}
-		aliveFighters++
 		fighter, ok := fightersMap[state.ID]
 		if !ok {
 			return false, fmt.Errorf("fighter '%s' not found", state.ID)
@@ -248,6 +249,9 @@ func (m *defaultManager) StopFightIfNeededAndLoot(ctx context.Context, fight *Fi
 			if err := m.PlayerManager.Update(ctx, &player); err != nil {
 				return false, err
 			}
+			messages = append(messages, fmt.Sprintf(
+				"%s получает %d золота за проданные части убитого монстра.",
+				player.Name, partsVal/2))
 		} else {
 			gold += fighter.Gold
 			parts = append(parts, fighter.Parts...)
@@ -258,37 +262,41 @@ func (m *defaultManager) StopFightIfNeededAndLoot(ctx context.Context, fight *Fi
 		}
 	}
 
-	var messages []string
 	alivePlayers := 0
 	added := 0
-	for _, state := range fight.Fighters {
-		if state.Health == 0 {
-			continue
+	if gold > 0 {
+		for _, state := range fight.Fighters {
+			if state.Health == 0 {
+				continue
+			}
+			amountToAdd := gold / aliveFighters
+			if added < (gold % aliveFighters) {
+				amountToAdd += 1
+			}
+			fighter := fightersMap[state.ID]
+			player, isPlayer := playersMap[state.ID]
+			var err error
+			if isPlayer {
+				alivePlayers += 1
+				err = m.AddGold(ctx, amountToAdd, fighter.ID, player.ID)
+				messages = append(messages,
+					fmt.Sprintf("%v получает %d золота.", player.Name, amountToAdd))
+			} else {
+				err = m.AddGold(ctx, amountToAdd, fighter.ID, idtype.ZeroPlayer)
+				messages = append(messages,
+					fmt.Sprintf("%v получает %d золота.", fighter.Name, amountToAdd))
+			}
+			if err != nil {
+				return false, err
+			}
+			added++
 		}
-		amountToAdd := gold / aliveFighters
-		if added < (gold % aliveFighters) {
-			amountToAdd += 1
-		}
-		fighter := fightersMap[state.ID]
-		player, isPlayer := playersMap[state.ID]
-		var err error
-		if isPlayer {
-			alivePlayers += 1
-			err = m.AddGold(ctx, amountToAdd, fighter.ID, player.ID)
-			messages = append(messages,
-				fmt.Sprintf("%v получает %d золота.", player.Name, amountToAdd))
-		} else {
-			err = m.AddGold(ctx, amountToAdd, fighter.ID, idtype.ZeroPlayer)
-			messages = append(messages,
-				fmt.Sprintf("%v получает %d золота.", fighter.Name, amountToAdd))
-		}
-		if err != nil {
-			return false, err
-		}
-		added++
 	}
 
 	if alivePlayers == 0 {
+		if err := m.NotificateFighters(ctx, fight, strings.Join(messages, "\n")); err != nil {
+			return false, err
+		}
 		return true, nil
 	}
 
