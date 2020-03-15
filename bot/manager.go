@@ -77,7 +77,7 @@ func (m *Manager) processPlayerMessage(
 		response = "Ты чего, мы же уже разговариваем."
 	case "/me":
 		response = fmt.Sprintf(
-			"Ты *%s*.\nУ тебя *%d* золота.",
+			"Ты **%s**.\nУ тебя **%d** золота.",
 			player.Name, player.Gold,
 		)
 	default:
