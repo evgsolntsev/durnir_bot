@@ -2,9 +2,9 @@ package player
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
+	"github.com/evgsolntsev/durnir_bot/fighter"
 	"github.com/evgsolntsev/durnir_bot/idtype"
 	"github.com/globalsign/mgo"
 	"github.com/stretchr/testify/require"
@@ -12,7 +12,9 @@ import (
 
 func TestPlayerDAO(t *testing.T) {
 	f := &Player{
-		Name: "Сарасти",
+		Name:       "Сарасти",
+		TelegramId: 123,
+		Parts:      []fighter.Part{},
 	}
 
 	session, err := mgo.Dial("mongodb://localhost:27017")
@@ -26,6 +28,7 @@ func TestPlayerDAO(t *testing.T) {
 	require.Nil(t, err)
 
 	f.Name = "Ундо"
+	f.TelegramId = 124
 	f, err = dao.Insert(ctx, f)
 	require.Nil(t, err)
 
@@ -34,6 +37,10 @@ func TestPlayerDAO(t *testing.T) {
 	require.Equal(t, *f, *dbF)
 
 	dbF, err = dao.FindOne(ctx, f.ID)
+	require.Nil(t, err)
+	require.Equal(t, *f, *dbF)
+
+	dbF, err = dao.FindOneByTelegramId(ctx, 124)
 	require.Nil(t, err)
 	require.Equal(t, *f, *dbF)
 }

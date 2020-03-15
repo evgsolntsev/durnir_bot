@@ -11,6 +11,7 @@ type Manager interface {
 	FindPlayersByFighters(context.Context, []idtype.Fighter) ([]Player, error)
 	FindPlayersByFightersMap(context.Context, []idtype.Fighter) (map[idtype.Fighter]Player, error)
 	GetOne(context.Context, idtype.Player) (*Player, error)
+	GetOneByTelegramId(context.Context, int64) (*Player, error)
 }
 
 type defaultManager struct {
@@ -47,4 +48,8 @@ func (m *defaultManager) Update(ctx context.Context, p *Player) error {
 
 func (d *defaultManager) GetOne(ctx context.Context, pID idtype.Player) (*Player, error) {
 	return d.PlayerDAO.FindOne(ctx, pID)
+}
+
+func (d *defaultManager) GetOneByTelegramId(ctx context.Context, telegramId int64) (*Player, error) {
+	return d.PlayerDAO.FindOneByTelegramId(ctx, telegramId)
 }

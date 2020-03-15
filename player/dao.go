@@ -15,6 +15,7 @@ var (
 
 type DAO interface {
 	FindOne(context.Context, idtype.Player) (*Player, error)
+	FindOneByTelegramId(context.Context, int64) (*Player, error)
 	FindByFighters(context.Context, []idtype.Fighter) ([]Player, error)
 	Update(context.Context, *Player) error
 	Insert(context.Context, *Player) (*Player, error)
@@ -36,6 +37,16 @@ func NewDAO(ctx context.Context, session *mgo.Session) *defaultDAO {
 func (d *defaultDAO) FindOne(ctx context.Context, id idtype.Player) (*Player, error) {
 	var result Player
 	err := d.collection.Find(bson.M{"_id": id}).One(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+func (d *defaultDAO) FindOneByTelegramId(ctx context.Context, telegramId int64) (*Player, error) {
+	var result Player
+	err := d.collection.Find(bson.M{"telegramId": telegramId}).One(&result)
 	if err != nil {
 		return nil, err
 	}

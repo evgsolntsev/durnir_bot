@@ -9,6 +9,7 @@ import (
 
 type Configuration struct {
 	Token       string
+	MongoURL    string
 	Debug       bool
 	Spreadsheet string
 }
