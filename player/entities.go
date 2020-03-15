@@ -7,8 +7,8 @@ import (
 
 type Player struct {
 	ID         idtype.Player   `bson:"_id"`
-	TelegramId int64             `bson:"telegramId"`
-	Name       string          `bson:"string"`
+	TelegramId int64           `bson:"telegramId"`
+	Name       string          `bson:"name"`
 	FighterID  *idtype.Fighter `bson:"fighterId"`
 	Gold       int             `bson:"gold"`
 	Parts      []fighter.Part  `bson:"parts"`
