@@ -90,13 +90,13 @@ func (d *defaultDAO) FindByFighters(ctx context.Context, fIDs []idtype.Fighter) 
 
 func (d *defaultDAO) SetFighterID(ctx context.Context, pID idtype.Player, fID idtype.Fighter) error {
 	query := bson.M{
-		"_id": pID,
+		"_id":       pID,
 		"fighterId": nil,
 	}
 
 	updateQuery := bson.M{
 		"$set": bson.M{
-			"fighterId": fID,
+			"fighterId": &fID,
 		},
 	}
 

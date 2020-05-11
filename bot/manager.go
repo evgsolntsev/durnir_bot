@@ -99,7 +99,7 @@ func (m *Manager) processPlayerMessage(
 		err = m.PlayerManager.GenerateFighter(ctx, player)
 		if err != nil {
 			response = "Что-то пошло не так; вероятнее всего у тебя уже есть монстр."
-			fmt.Printf("Monster generating error: %s", err.Error())
+			fmt.Printf("Monster generating error: %s\n", err.Error())
 		} else {
 			response = "Монстр создан."
 		}
