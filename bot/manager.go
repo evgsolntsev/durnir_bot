@@ -3,24 +3,29 @@ package bot
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
+	"github.com/evgsolntsev/durnir_bot/fighter"
 	"github.com/evgsolntsev/durnir_bot/player"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
 type Manager struct {
-	PlayerManager player.Manager
-	BotAPI        *tgbotapi.BotAPI
+	PlayerManager  player.Manager
+	FighterManager fighter.Manager
+	BotAPI         *tgbotapi.BotAPI
 }
 
 func NewManager(
 	playerManager player.Manager,
+	fighterManager fighter.Manager,
 	botAPI *tgbotapi.BotAPI,
 ) *Manager {
 	return &Manager{
-		PlayerManager: playerManager,
-		BotAPI:        botAPI,
+		PlayerManager:  playerManager,
+		FighterManager: fighterManager,
+		BotAPI:         botAPI,
 	}
 }
 
@@ -71,17 +76,41 @@ func (m *Manager) processStrangerMessage(ctx context.Context, command string, ar
 func (m *Manager) processPlayerMessage(
 	ctx context.Context, player *player.Player, command string, args []string,
 ) (string, error) {
-	var response string
+	var (
+		response string
+		fighter  *fighter.Fighter
+		err      error
+	)
+
+	if player.FighterID != nil {
+		fighter, err = m.FighterManager.GetOne(ctx, *player.FighterID)
+	}
+	if err != nil {
+		log.Printf("Error getting fighter with ID `%s`: %s", *player.FighterID, err.Error())
+	}
+
 	switch command {
 	case "/start":
 		response = "Ты чего, мы же уже разговариваем."
 	case "/me":
-		response = fmt.Sprintf(
-			"Ты **%s**.\nУ тебя **%d** золота.",
-			player.Name, player.Gold,
-		)
+		response = description(player, fighter)
+	case "/generate":
 	default:
 		response = "Извини, я тебя не понял. Попробуй ещё разок или пожалуйся @evgsol."
 	}
 	return response, nil
+}
+
+func description(player *player.Player, fighter *fighter.Fighter) string {
+	fighterString := ""
+	if fighter != nil {
+		fighterString = fmt.Sprintf(
+			"У тебя есть мoнстр %s.\nЖизней: %d\nМаны: %d",
+			fighter.Name, fighter.Health, fighter.Mana,
+		)
+	}
+	return fmt.Sprintf(
+		"Ты %s.\nУ тебя %d золота.\n%s",
+		player.Name, player.Gold, fighterString)
+
 }

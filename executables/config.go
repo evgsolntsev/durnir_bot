@@ -1,4 +1,4 @@
-package main
+package executables
 
 import (
 	"encoding/json"
@@ -14,7 +14,7 @@ type Configuration struct {
 	Spreadsheet string
 }
 
-func (c *Configuration) init(filename string) error {
+func (c *Configuration) Init(filename string) error {
 	rand.Seed(time.Now().Unix())
 
 	file, err := os.Open(filename)

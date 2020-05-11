@@ -1,11 +1,13 @@
-package main
+package bot
 
 import (
 	"context"
 	"log"
 
 	"github.com/evgsolntsev/durnir_bot/bot"
+	"github.com/evgsolntsev/durnir_bot/fighter"
 	"github.com/evgsolntsev/durnir_bot/player"
+	"github.com/evgsolntsev/durnir_bot/executables"
 	"github.com/globalsign/mgo"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -13,18 +15,18 @@ import (
 var (
 	CONFIGFILE  = "conf.json"
 	SheetsCreds = "sheets_credentials.json"
-	Config      Configuration
-	Manager     GoogleSheetManager
+	Config      executables.Configuration
+	//Manager     GoogleSheetManager
 )
 
-func initManager() {
-	if err := Manager.init(); err != nil {
-		log.Fatal(err)
-	}
-}
+//func initManager() {
+//	if err := Manager.init(); err != nil {
+//		log.Fatal(err)
+//	}
+//}
 
 func main() {
-	if err := Config.init(CONFIGFILE); err != nil {
+	if err := Config.Init(CONFIGFILE); err != nil {
 		log.Fatal(err)
 	}
 
@@ -44,7 +46,9 @@ func main() {
 	}
 	playerDAO := player.NewDAO(ctx, session)
 	playerManager := player.NewManager(ctx, playerDAO)
-	botManager := bot.NewManager(playerManager, tgbot)
+	fighterDAO := fighter.NewDAO(ctx, session)
+	fighterManager := fighter.NewManager(ctx, fighterDAO)
+	botManager := bot.NewManager(playerManager, fighterManager, tgbot)
 
 	updates, err := tgbot.GetUpdatesChan(u)
 
