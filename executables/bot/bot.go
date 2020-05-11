@@ -44,10 +44,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	playerDAO := player.NewDAO(ctx, session)
-	playerManager := player.NewManager(ctx, playerDAO)
 	fighterDAO := fighter.NewDAO(ctx, session)
 	fighterManager := fighter.NewManager(ctx, fighterDAO)
+	playerDAO := player.NewDAO(ctx, session)
+	playerManager := player.NewManager(ctx, playerDAO, fighterManager)
 	botManager := bot.NewManager(playerManager, fighterManager, tgbot)
 
 	updates, err := tgbot.GetUpdatesChan(u)
