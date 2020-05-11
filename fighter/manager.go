@@ -13,6 +13,7 @@ type Manager interface {
 	GetMapByIDs(context.Context, []idtype.Fighter) (map[idtype.Fighter]Fighter, error)
 	Update(context.Context, *Fighter) error
 	RemoveOne(context.Context, idtype.Fighter) error
+	Create(context.Context, string) (*Fighter, error)
 }
 
 type defaultManager struct {
@@ -64,4 +65,23 @@ func (d *defaultManager) RemoveOne(ctx context.Context, fID idtype.Fighter) erro
 
 func (m *defaultManager) Update(ctx context.Context, f *Fighter) error {
 	return m.FighterDAO.Update(ctx, f)
+}
+
+func (m *defaultManager) Create(ctx context.Context, name string) (*Fighter, error) {
+	result := &Fighter{
+		Name:      name,
+		Health:    100,
+		Mana:      100,
+		Will:      1,
+		Power:     1,
+		FearPower: 1,
+		Hex:       idtype.StartHex,
+	}
+
+	real, err := m.FighterDAO.Insert(ctx, result)
+	if err != nil {
+		return nil, err
+	}
+
+	return real, nil
 }

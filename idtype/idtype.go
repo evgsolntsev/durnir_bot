@@ -33,4 +33,5 @@ func NewHex() Hex {
 var (
 	ZeroPlayer  = Player(bson.ObjectId(""))
 	ZeroFighter = Fighter(bson.ObjectId(""))
+	StartHex    = Hex(0)
 )

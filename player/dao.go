@@ -20,6 +20,7 @@ type DAO interface {
 	Update(context.Context, *Player) error
 	Insert(context.Context, *Player) (*Player, error)
 	RemoveAll(context.Context) error
+	SetFighterID(context.Context, idtype.Player, idtype.Fighter) error
 }
 
 var _ DAO = (*defaultDAO)(nil)
@@ -85,4 +86,19 @@ func (d *defaultDAO) FindByFighters(ctx context.Context, fIDs []idtype.Fighter) 
 	}
 
 	return result, nil
+}
+
+func (d *defaultDAO) SetFighterID(ctx context.Context, pID idtype.Player, fID idtype.Fighter) error {
+	query := bson.M{
+		"_id": pID,
+		"fighterId": nil,
+	}
+
+	updateQuery := bson.M{
+		"$set": bson.M{
+			"fighterId": fID,
+		},
+	}
+
+	return d.collection.Update(query, updateQuery)
 }

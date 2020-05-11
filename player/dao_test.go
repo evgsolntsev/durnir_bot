@@ -2,6 +2,7 @@ package player
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/evgsolntsev/durnir_bot/fighter"
@@ -10,21 +11,37 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	dao     DAO
+	manager Manager
+)
+
+func TestMain(m *testing.M) {
+	session, err := mgo.Dial("mongodb://localhost:27017")
+	if err != nil {
+		os.Exit(1)
+	}
+
+	ctx := context.Background()
+	dao = NewDAO(ctx, session)
+	defer dao.RemoveAll(ctx)
+
+	code := m.Run()
+
+	os.Exit(code)
+}
+
 func TestPlayerDAO(t *testing.T) {
+	ctx := context.Background()
+	dao.RemoveAll(ctx)
+
 	f := &Player{
 		Name:       "Сарасти",
 		TelegramId: 123,
 		Parts:      []fighter.Part{},
 	}
 
-	session, err := mgo.Dial("mongodb://localhost:27017")
-	require.Nil(t, err)
-
-	ctx := context.Background()
-	dao := NewDAO(ctx, session)
-	defer dao.RemoveAll(ctx)
-
-	f, err = dao.Insert(ctx, f)
+	f, err := dao.Insert(ctx, f)
 	require.Nil(t, err)
 
 	f.Name = "Ундо"
@@ -46,6 +63,8 @@ func TestPlayerDAO(t *testing.T) {
 }
 
 func TestFindByFighters(t *testing.T) {
+	ctx := context.Background()
+
 	f1 := idtype.NewFighter()
 	f2 := idtype.NewFighter()
 	f3 := idtype.NewFighter()
@@ -62,14 +81,7 @@ func TestFindByFighters(t *testing.T) {
 		FighterID: &f3,
 	}
 
-	session, err := mgo.Dial("mongodb://localhost:27017")
-	require.Nil(t, err)
-
-	ctx := context.Background()
-	dao := NewDAO(ctx, session)
-	defer dao.RemoveAll(ctx)
-
-	p1, err = dao.Insert(ctx, p1)
+	p1, err := dao.Insert(ctx, p1)
 	require.Nil(t, err)
 	p2, err = dao.Insert(ctx, p2)
 	require.Nil(t, err)
@@ -86,4 +98,27 @@ func TestFindByFighters(t *testing.T) {
 
 	expectedIDs := []idtype.Player{p1.ID, p2.ID}
 	require.Equal(t, expectedIDs, realIDs)
+}
+
+func TestSetFighterID(t *testing.T) {
+	ctx := context.Background()
+
+	fID := idtype.NewFighter()
+	p, err := dao.Insert(ctx, &Player{})
+	require.Nil(t, err)
+
+	err = dao.SetFighterID(ctx, p.ID, fID)
+	require.Nil(t, err)
+
+	dbP, err := dao.FindOne(ctx, p.ID)
+	require.Nil(t, err)
+	require.Equal(t, fID, *dbP.FighterID)
+
+	f2ID := idtype.NewFighter()
+	err = dao.SetFighterID(ctx, p.ID, f2ID)
+	require.NotNil(t, err)
+
+	dbP, err = dao.FindOne(ctx, p.ID)
+	require.Nil(t, err)
+	require.Equal(t, fID, *dbP.FighterID)
 }

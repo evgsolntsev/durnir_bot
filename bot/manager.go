@@ -87,6 +87,7 @@ func (m *Manager) processPlayerMessage(
 	}
 	if err != nil {
 		log.Printf("Error getting fighter with ID `%s`: %s", *player.FighterID, err.Error())
+		return "Что-то пошло не так. Позови @evgsol", nil
 	}
 
 	switch command {
@@ -95,6 +96,12 @@ func (m *Manager) processPlayerMessage(
 	case "/me":
 		response = description(player, fighter)
 	case "/generate":
+		err = m.PlayerManager.GenerateFighter(ctx, player)
+		if err != nil {
+			response = "Что-то пошло не так; вероятнее всего у тебя уже есть монстр."
+		} else {
+			response = "Монстр создан."
+		}
 	default:
 		response = "Извини, я тебя не понял. Попробуй ещё разок или пожалуйся @evgsol."
 	}

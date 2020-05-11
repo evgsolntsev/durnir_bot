@@ -81,3 +81,14 @@ func TestGetMapByIDs(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, 25, result.Health)
 }
+
+func TestCreate(t *testing.T) {
+	ctx := context.Background()
+	f, err := manager.Create(ctx, "KEK")
+	require.Nil(t, err)
+
+	dbF, err := dao.FindOne(ctx, f.ID)
+	require.Nil(t, err)
+	require.NotNil(t, dbF)
+	require.Equal(t, "KEK", dbF.Name)
+}
