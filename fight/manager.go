@@ -3,7 +3,6 @@ package fight
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/rand"
 	"strings"
 	"time"
@@ -55,7 +54,6 @@ func (m *defaultManager) Step(ctx context.Context, hexID idtype.Hex) error {
 	}
 
 	if fight == nil {
-		log.Printf("No fight on %v\n", hexID)
 		return nil
 	}
 

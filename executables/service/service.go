@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/evgsolntsev/durnir_bot/bot"
 	"github.com/evgsolntsev/durnir_bot/executables"
@@ -52,5 +53,6 @@ func main() {
 		}
 
 		log.Printf(result)
+		time.Sleep(time.Second)
 	}
 }
