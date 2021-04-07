@@ -82,7 +82,7 @@ func (m *Manager) processPlayerMessage(
 ) (string, error) {
 	var (
 		response string
-		f  *fighter.Fighter
+		f        *fighter.Fighter
 		err      error
 	)
 
@@ -106,6 +106,18 @@ func (m *Manager) processPlayerMessage(
 			fmt.Printf("Monster generating error: %s\n", err.Error())
 		} else {
 			response = "Монстр создан."
+		}
+	case "/fight":
+		if f == nil {
+			response = "Как ты будешь драться, если у тебя нет монстра?"
+		} else {
+			err = m.FighterManager.SetJoining(ctx, f.ID, true)
+			if err != nil {
+				response = fmt.Sprintf("Что-то пошло не так: %v", err.Error())
+				fmt.Printf("Fight joining error: %s\n", err.Error())
+			} else {
+				response = "Пытаемся присоединиться..."
+			}
 		}
 	case "/generateMonster":
 		if len(args) == 0 {
