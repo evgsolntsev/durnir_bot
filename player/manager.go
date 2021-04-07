@@ -65,7 +65,8 @@ func (d *defaultManager) GetOneByTelegramId(ctx context.Context, telegramId int6
 }
 
 func (d *defaultManager) GenerateFighter(ctx context.Context, p *Player) error {
-	newFighter, err := d.FighterManager.Create(ctx, fmt.Sprintf("Монстр %s", p.Name))
+	newFighter, err := d.FighterManager.Create(
+		ctx, fmt.Sprintf("Монстр %s", p.Name), fighter.FractionPlayers)
 	if err != nil {
 		return err
 	}

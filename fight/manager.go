@@ -44,7 +44,12 @@ func (m *defaultManager) Step(ctx context.Context, hexID idtype.Hex) error {
 			if err != nil {
 				return err
 			}
-			if len(fighters) > 0 {
+			mapFighters := make(map[fighter.Fraction][]*fighter.Fighter)
+			for _, f := range fighters {
+				mapFighters[f.Fraction] = append(mapFighters[f.Fraction], f)
+			}
+
+			if len(mapFighters) > 1 {
 				fight, err = m.InitFight(ctx, hexID, fighters)
 				if err != nil {
 					return err

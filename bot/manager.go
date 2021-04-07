@@ -107,6 +107,18 @@ func (m *Manager) processPlayerMessage(
 		} else {
 			response = "Монстр создан."
 		}
+	case "/generateMonster":
+		if len(args) == 0 {
+			response = "Укажи, пожалуйста, имя создаваемого монстра."
+		} else {
+			err = m.FighterManager.Create(ctx, args[1], fighter.FractionMonsters)
+			if err != nil {
+				response = fmt.Sprintf("Что-то пошло не так: %v", err.Error())
+				fmt.Printf("Monster generating error: %s\n", err.Error())
+			} else {
+				response = "Монстр создан."
+			}
+		}
 	default:
 		response = "Извини, я тебя не понял. Попробуй ещё разок или пожалуйся @evgsol."
 	}

@@ -67,7 +67,10 @@ func (m *defaultManager) Update(ctx context.Context, f *Fighter) error {
 	return m.FighterDAO.Update(ctx, f)
 }
 
-func (m *defaultManager) Create(ctx context.Context, name string) (*Fighter, error) {
+func (m *defaultManager) Create(
+	ctx context.Context, name string, fraction Fraction,
+) (*Fighter, error) {
+
 	result := &Fighter{
 		Name:      name,
 		Health:    100,
@@ -76,6 +79,11 @@ func (m *defaultManager) Create(ctx context.Context, name string) (*Fighter, err
 		Power:     1,
 		FearPower: 1,
 		Hex:       idtype.StartHex,
+		Fraction:  fraction,
+	}
+
+	if fraction == FractionMonsters {
+		result.JoinFight = true
 	}
 
 	real, err := m.FighterDAO.Insert(ctx, result)
