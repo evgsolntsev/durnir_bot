@@ -82,12 +82,12 @@ func (m *Manager) processPlayerMessage(
 ) (string, error) {
 	var (
 		response string
-		fighter  *fighter.Fighter
+		f  *fighter.Fighter
 		err      error
 	)
 
 	if player.FighterID != nil {
-		fighter, err = m.FighterManager.GetOne(ctx, *player.FighterID)
+		f, err = m.FighterManager.GetOne(ctx, *player.FighterID)
 	}
 	if err != nil {
 		log.Printf("Error getting fighter with ID `%s`: %s", *player.FighterID, err.Error())
@@ -98,7 +98,7 @@ func (m *Manager) processPlayerMessage(
 	case "/start":
 		response = "Ты чего, мы же уже разговариваем."
 	case "/me":
-		response = description(player, fighter)
+		response = description(player, f)
 	case "/generate":
 		err = m.PlayerManager.GenerateFighter(ctx, player)
 		if err != nil {
@@ -111,7 +111,7 @@ func (m *Manager) processPlayerMessage(
 		if len(args) == 0 {
 			response = "Укажи, пожалуйста, имя создаваемого монстра."
 		} else {
-			err = m.FighterManager.Create(ctx, args[1], fighter.FractionMonsters)
+			_, err = m.FighterManager.Create(ctx, args[1], fighter.FractionMonsters)
 			if err != nil {
 				response = fmt.Sprintf("Что-то пошло не так: %v", err.Error())
 				fmt.Printf("Monster generating error: %s\n", err.Error())
