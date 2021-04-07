@@ -13,7 +13,7 @@ type Manager interface {
 	GetMapByIDs(context.Context, []idtype.Fighter) (map[idtype.Fighter]Fighter, error)
 	Update(context.Context, *Fighter) error
 	RemoveOne(context.Context, idtype.Fighter) error
-	Create(context.Context, string) (*Fighter, error)
+	Create(context.Context, string, Fraction) (*Fighter, error)
 }
 
 type defaultManager struct {

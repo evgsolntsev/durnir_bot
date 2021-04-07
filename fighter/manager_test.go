@@ -84,11 +84,12 @@ func TestGetMapByIDs(t *testing.T) {
 
 func TestCreate(t *testing.T) {
 	ctx := context.Background()
-	f, err := manager.Create(ctx, "KEK")
+	f, err := manager.Create(ctx, "KEK", FractionPlayers)
 	require.Nil(t, err)
 
 	dbF, err := dao.FindOne(ctx, f.ID)
 	require.Nil(t, err)
 	require.NotNil(t, dbF)
 	require.Equal(t, "KEK", dbF.Name)
+	require.Equal(t, FractionPlayers, dbF.Fraction)
 }
