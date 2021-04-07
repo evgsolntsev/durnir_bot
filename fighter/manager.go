@@ -79,6 +79,7 @@ func (m *defaultManager) Create(
 		Power:     1,
 		FearPower: 1,
 		Hex:       idtype.StartHex,
+		Deck:      []Card{CardHeal, CardHit, CardSkip},
 		Fraction:  fraction,
 	}
 
