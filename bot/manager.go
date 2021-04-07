@@ -111,7 +111,7 @@ func (m *Manager) processPlayerMessage(
 		if len(args) == 0 {
 			response = "Укажи, пожалуйста, имя создаваемого монстра."
 		} else {
-			_, err = m.FighterManager.Create(ctx, args[1], fighter.FractionMonsters)
+			_, err = m.FighterManager.Create(ctx, args[0], fighter.FractionMonsters)
 			if err != nil {
 				response = fmt.Sprintf("Что-то пошло не так: %v", err.Error())
 				fmt.Printf("Monster generating error: %s\n", err.Error())
