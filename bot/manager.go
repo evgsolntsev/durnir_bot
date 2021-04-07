@@ -6,7 +6,9 @@ import (
 	"log"
 	"strings"
 
+	"github.com/evgsolntsev/durnir_bot/fight"
 	"github.com/evgsolntsev/durnir_bot/fighter"
+	"github.com/evgsolntsev/durnir_bot/idtype"
 	"github.com/evgsolntsev/durnir_bot/player"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -16,6 +18,8 @@ type Manager struct {
 	FighterManager fighter.Manager
 	BotAPI         *tgbotapi.BotAPI
 }
+
+var _ fight.Notificator = (*Manager)(nil)
 
 func NewManager(
 	playerManager player.Manager,
@@ -107,6 +111,18 @@ func (m *Manager) processPlayerMessage(
 		response = "Извини, я тебя не понял. Попробуй ещё разок или пожалуйся @evgsol."
 	}
 	return response, nil
+}
+
+func (m *Manager) Send(ctx context.Context, playerID idtype.Player, message string) error {
+	player, err := m.PlayerManager.GetOne(ctx, playerID)
+	if err != nil {
+		return err
+	}
+	msg := tgbotapi.NewMessage(player.TelegramId, message)
+	if _, err := m.BotAPI.Send(msg); err != nil {
+		return err
+	}
+	return nil
 }
 
 func description(player *player.Player, fighter *fighter.Fighter) string {

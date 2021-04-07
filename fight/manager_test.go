@@ -33,10 +33,10 @@ func TestMain(m *testing.M) {
 	}
 
 	ctx = context.Background()
-	playerDAO = player.NewDAO(ctx, session)
-	playerManager = player.NewManager(ctx, playerDAO)
 	fighterDAO = fighter.NewDAO(ctx, session)
 	fighterManager = fighter.NewManager(ctx, fighterDAO)
+	playerDAO = player.NewDAO(ctx, session)
+	playerManager = player.NewManager(ctx, playerDAO, fighterManager)
 	fightDAO = NewDAO(ctx, session)
 	notificator = NewNotificator(ctx)
 	manager = NewManager(ctx, playerManager, fighterManager, fightDAO, notificator)
