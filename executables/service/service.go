@@ -53,6 +53,6 @@ func main() {
 		}
 
 		log.Printf(result)
-		time.Sleep(time.Second)
+		time.Sleep(31 * time.Second)
 	}
 }
