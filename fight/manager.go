@@ -54,6 +54,15 @@ func (m *defaultManager) Step(ctx context.Context, hexID idtype.Hex) error {
 				if err != nil {
 					return err
 				}
+
+				var fightersNames []string
+				for _, f := range fighters {
+					fightersNames = append(fightersNames, f.Name)
+				}
+				message := fmt.Sprintf(
+					"Ого, кажется на гексе %v скоро начнётся бой. Участвуют %v.",
+					hexID, strings.Join(fightersNames, ", "))
+				return m.NotificateFighters(ctx, fight, message)
 			}
 		}
 	}
