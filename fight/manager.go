@@ -18,7 +18,7 @@ type Notificator interface {
 }
 
 var (
-	TimeToStart  = time.Minute * 10
+	TimeToStart  = time.Minute * 1
 	TimeToUpdate = time.Second * -30
 )
 
