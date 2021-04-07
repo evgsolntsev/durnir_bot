@@ -445,7 +445,18 @@ func (m *defaultManager) InitFight(ctx context.Context, hexID idtype.Hex, fighte
 		Started:     false,
 		Hex:         hexID,
 	}
-	return m.FightDAO.Insert(ctx, fight)
+
+	result, err := m.FightDAO.Insert(ctx, fight)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range fighters {
+		if err := m.FighterManager.SetJoining(ctx, f.ID, false); err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
 }
 
 func checkPeriod(a, b time.Time, d time.Duration) bool {
