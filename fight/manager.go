@@ -81,7 +81,7 @@ func (m *defaultManager) Step(ctx context.Context, hexID idtype.Hex) error {
 		return err
 	}
 	if stopped {
-		return nil
+		return m.FightDAO.RemoveOne(ctx, fight)
 	}
 
 	err = m.JoinFighters(ctx, fight)
@@ -340,9 +340,6 @@ func (m *defaultManager) StopFightIfNeededAndLoot(ctx context.Context, fight *Fi
 	}
 
 	if err := m.NotificateFighters(ctx, fight, strings.Join(messages, "\n")); err != nil {
-		return false, err
-	}
-	if err := m.FightDAO.RemoveOne(ctx, fight); err != nil {
 		return false, err
 	}
 	return true, nil
