@@ -342,6 +342,9 @@ func (m *defaultManager) StopFightIfNeededAndLoot(ctx context.Context, fight *Fi
 	if err := m.NotificateFighters(ctx, fight, strings.Join(messages, "\n")); err != nil {
 		return false, err
 	}
+	if err := m.FightDAO.RemoveOne(ctx, fight); err != nil {
+		return false, err
+	}
 	return true, nil
 }
 

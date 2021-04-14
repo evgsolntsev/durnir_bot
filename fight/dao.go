@@ -70,3 +70,8 @@ func (d *defaultDAO) RemoveAll(ctx context.Context) error {
 	_, err := d.collection.RemoveAll(bson.M{})
 	return err
 }
+
+func (d *defaultDAO) RemoveOne(ctx context.Context, fight *Fight) error {
+	_, err := d.collection.Remove(bson.M{"_id": fight.ID})
+	return err
+}
