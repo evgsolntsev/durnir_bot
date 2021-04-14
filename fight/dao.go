@@ -19,6 +19,7 @@ type DAO interface {
 	Update(context.Context, *Fight) error
 	Insert(context.Context, *Fight) (*Fight, error)
 	RemoveAll(context.Context) error
+	RemoveOne(context.Context, *Fight) error
 }
 
 var _ DAO = (*defaultDAO)(nil)
@@ -72,6 +73,5 @@ func (d *defaultDAO) RemoveAll(ctx context.Context) error {
 }
 
 func (d *defaultDAO) RemoveOne(ctx context.Context, fight *Fight) error {
-	_, err := d.collection.Remove(bson.M{"_id": fight.ID})
-	return err
+	return d.collection.Remove(bson.M{"_id": fight.ID})
 }

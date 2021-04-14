@@ -61,4 +61,10 @@ func TestFightDAO(t *testing.T) {
 	dbF, err = dao.FindOneByHex(ctx, idtype.NewHex())
 	require.Nil(t, dbF)
 	require.Error(t, err)
+
+	err = dao.RemoveOne(ctx, f)
+	require.Nil(t, err)
+
+	dbF, err = dao.FindOne(ctx, f.ID)
+	require.Error(t, err)
 }
